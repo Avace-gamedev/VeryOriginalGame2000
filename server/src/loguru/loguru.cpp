@@ -225,7 +225,7 @@ namespace loguru
 #endif
 	}();
 
-	static void print_preamble_header(char *out_buff, size_t out_buff_size);
+	static void print_preamble_header(char *out_buff, int out_buff_size);
 
 #if LOGURU_PTLS_NAMES
 	static pthread_once_t s_pthread_key_once = PTHREAD_ONCE_INIT;
@@ -436,8 +436,8 @@ namespace loguru
 			".   .   .   .   .   .   .   .   .   .   "
 			".   .   .   .   .   .   .   .   .   .   "
 			".   .   .   .   .   .   .   .   .   .   ";
-		static const size_t INDENTATION_WIDTH = 4;
-		static const size_t NUM_INDENTATIONS = (sizeof(buff) - 1) / INDENTATION_WIDTH;
+		static const int INDENTATION_WIDTH = 4;
+		static const int NUM_INDENTATIONS = (sizeof(buff) - 1) / INDENTATION_WIDTH;
 		depth = std::min<unsigned>(depth, NUM_INDENTATIONS);
 		return buff + INDENTATION_WIDTH * (NUM_INDENTATIONS - depth);
 	}
@@ -712,7 +712,7 @@ namespace loguru
 		set_name_to_verbosity_callback(nullptr);
 	}
 
-	void write_date_time(char *buff, size_t buff_size)
+	void write_date_time(char *buff, int buff_size)
 	{
 		auto now = system_clock::now();
 		long long ms_since_epoch = duration_cast<milliseconds>(now.time_since_epoch()).count();
@@ -764,7 +764,7 @@ namespace loguru
 		}
 
 		// Check for terminating /
-		size_t n = strlen(buff);
+		int n = strlen(buff);
 		if (n != 0)
 		{
 			if (buff[n - 1] != '/')
@@ -777,7 +777,7 @@ namespace loguru
 
 		strncat(buff, s_argv0_filename.c_str(), buff_size - strlen(buff) - 1);
 		strncat(buff, "/", buff_size - strlen(buff) - 1);
-		write_date_time(buff + strlen(buff), buff_size - strlen(buff));
+		write_date_time(buff + strlen(buff), (int)buff_size - (int)strlen(buff));
 		strncat(buff, ".log", buff_size - strlen(buff) - 1);
 	}
 
@@ -1125,7 +1125,7 @@ namespace loguru
 #elif LOGURU_WINTHREADS
 		if (const char *name = get_thread_name_win32())
 		{
-			snprintf(buffer, (size_t)length, "%s", name);
+			snprintf(buffer, (int)length, "%s", name);
 		}
 		else
 		{
@@ -1179,7 +1179,7 @@ namespace loguru
 				continue;
 			}
 
-			size_t it;
+			int it;
 			while ((it = str.find(p.first)) != std::string::npos)
 			{
 				str.replace(it, p.first.size(), p.second);
@@ -1283,7 +1283,7 @@ namespace loguru
 
 	// ------------------------------------------------------------------------
 
-	static void print_preamble_header(char *out_buff, size_t out_buff_size)
+	static void print_preamble_header(char *out_buff, int out_buff_size)
 	{
 		if (out_buff_size == 0)
 		{
@@ -1321,7 +1321,7 @@ namespace loguru
 		}
 	}
 
-	static void print_preamble(char *out_buff, size_t out_buff_size, Verbosity verbosity, const char *file, unsigned line)
+	static void print_preamble(char *out_buff, int out_buff_size, Verbosity verbosity, const char *file, unsigned line)
 	{
 		if (out_buff_size == 0)
 		{
@@ -2002,7 +2002,7 @@ namespace loguru
 		{SIGTERM, "SIGTERM"},
 	};
 
-	void write_to_stderr(const char *data, size_t size)
+	void write_to_stderr(const char *data, int size)
 	{
 		auto result = write(STDERR_FILENO, data, size);
 		(void)result; // Ignore errors.

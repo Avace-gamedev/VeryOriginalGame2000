@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-typedef uint64_t tick_t;
+typedef uint32_t tick_t;
 
 class Time
 {
@@ -13,6 +13,7 @@ public:
     static inline tick_t msToClientTicks(unsigned long long ms);
 
     static void startNow();
+    static tick_t Time::msToTicks(unsigned long long ms, double period);
     static unsigned long long now();
     static unsigned long long nowInMilliseconds();
     static tick_t Time::nowInTicks(double period);

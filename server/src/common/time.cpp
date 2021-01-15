@@ -2,8 +2,8 @@
 #include <cmath>
 #include "common/time.h"
 
-tick_t Time::start_time = 0;
-tick_t Time::freq = 0;
+unsigned long long Time::start_time = 0;
+unsigned long long Time::freq = 0;
 
 void Time::startNow()
 {
@@ -11,36 +11,41 @@ void Time::startNow()
     QueryPerformanceFrequency((LARGE_INTEGER *)&Time::freq);
 }
 
-tick_t Time::now()
+tick_t Time::msToTicks(unsigned long long ms, double period)
 {
-    tick_t now;
+    return (tick_t)(ms / (period * 1000));
+}
+
+unsigned long long Time::now()
+{
+    unsigned long long now;
     QueryPerformanceCounter((LARGE_INTEGER *)&now);
     return 1000 * (now - Time::start_time) / Time::freq;
 }
 
-tick_t Time::nowInMilliseconds() { return now(); }
+unsigned long long Time::nowInMilliseconds() { return now(); }
 
-tick_t Time::nextDeadline(double period)
+unsigned long long Time::nextDeadline(double period)
 {
-    tick_t now = Time::nowInMilliseconds();
-    tick_t n_periods = (tick_t)ceil((double)now / (period * 1000));
-    return n_periods * period * 1000;
+    unsigned long long now = Time::nowInMilliseconds();
+    unsigned long long n_periods = (unsigned long long)ceil((double)now / (period * 1000));
+    return (unsigned long long)(n_periods * period * 1000);
 }
 
 tick_t Time::nowInTicks(double period)
 {
-    return floor(Time::nowInMilliseconds() / (period * 1000));
+    return msToTicks(now(), period);
 }
 
-tick_t Time::timeBeforeDeadline(double period)
+unsigned long long Time::timeBeforeDeadline(double period)
 {
     return nextDeadline(period) - nowInMilliseconds();
 }
 
-struct timeval Time::timevalOfLongLong(tick_t time)
+struct timeval Time::timevalOfLongLong(unsigned long long time)
 {
     struct timeval res;
-    res.tv_sec = time / 1000;
-    res.tv_usec = (time - res.tv_sec) * 1000;
+    res.tv_sec = (long)(time / 1000);
+    res.tv_usec = (long)((time - res.tv_sec) * 1000);
     return res;
 }

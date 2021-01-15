@@ -2,11 +2,11 @@
 
 #include "loguru/loguru.hpp"
 
-NetworkFrame::NetworkFrame(const int len)
+NetworkFrame::NetworkFrame(const framesize_t len)
 {
 #if DEBUG
-    if (len > 1 << (4 * sizeof(size_t)) - 1)
-        LOG_F(ERROR, "len %d too big, field size is only int%d", len, sizeof(size_t) * 4);
+    if (len > 1 << (4 * sizeof(framesize_t)) - 1)
+        LOG_F(ERROR, "len %d too big, field size is only int%d", len, sizeof(framesize_t) * 4);
 #endif
 
     buffer_size = BUFFER_SIZE;
@@ -47,12 +47,12 @@ OPCODE &NetworkFrame::opcode() const
     return NetworkFrame::getMessageOpCode(header());
 }
 
-size_t NetworkFrame::totalSize() const
+framesize_t NetworkFrame::totalSize() const
 {
-    return size() + HEADER_SIZE;
+    return NetworkFrame::getMessageTotalSize(header());
 }
 
-size_t &NetworkFrame::size() const
+framesize_t &NetworkFrame::size() const
 {
     return NetworkFrame::getMessageSize(header());
 }
@@ -83,7 +83,7 @@ const char *NetworkFrame::content() const
     return &header()[HEADER_SIZE];
 }
 
-void NetworkFrame::append(const void *bytes, const int len)
+void NetworkFrame::append(const void *bytes, const framesize_t len)
 {
     if (HEADER_SIZE + size() + len > buffer_size)
     {
@@ -133,7 +133,7 @@ void NetworkFrame::appendFloat(const float f)
 void NetworkFrame::appendString(std::string s)
 {
     const char *cstr = s.c_str();
-    int len = strlen(cstr);
+    int len = (int)strlen(cstr);
     append(cstr, len + 1);
 }
 
@@ -142,9 +142,14 @@ OPCODE &NetworkFrame::getMessageOpCode(const char *message)
     return ((OPCODE *)message)[0];
 }
 
-size_t &NetworkFrame::getMessageSize(const char *message)
+framesize_t &NetworkFrame::getMessageSize(const char *message)
 {
-    return ((size_t *)(&message[1]))[0];
+    return ((framesize_t *)(&message[1]))[0];
+}
+
+framesize_t NetworkFrame::getMessageTotalSize(const char *message)
+{
+    return getMessageSize(message) + HEADER_SIZE;
 }
 
 char *NetworkFrame::getMessageContent(char *message)

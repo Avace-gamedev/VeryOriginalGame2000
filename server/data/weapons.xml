@@ -1,0 +1,45 @@
+<weapons>
+	<!-- 
+	    <weapon name=NAME>
+		    <spread>SPREAD</spread>               in degrees
+		    <rate>RATE</rate>                     in shots/sec
+            <damage>DAMAGE</damage>
+			<range>RANGE</range>                  in pixels
+            <bullet_speed>SPEED</bullet_speed>    in pixel/sec (0 = hitscan) 
+            <bullet_count>COUNT</bullet_count>    
+	    <weapon>
+	-->
+	
+    <weapon name="Pistol">
+        <spread>10</spread>
+        <rate>1.5</rate>
+        <damage>20</damage>
+        <range>200</range>
+        <bullet_speed>0</bullet_speed>
+        <bullet_count>1</bullet_count>
+    </weapon>
+    <weapon name="Sniper">
+        <spread>0</spread>
+        <rate>0.5</rate>
+        <damage>100</damage>
+        <range>1000</range>
+        <bullet_speed>0</bullet_speed>
+        <bullet_count>1</bullet_count>
+    </weapon>
+    <weapon name="SMG">
+        <spread>20</spread>
+        <rate>6</rate>
+        <damage>15</damage>
+        <range>100</range>
+        <bullet_speed>0</bullet_speed>
+        <bullet_count>1</bullet_count>
+    </weapon>
+	<weapon name="Shotgun">
+		<spread>30</spread>
+		<rate>3</rate>
+		<damage>15</damage>
+		<range>100</range>
+		<bullet_speed>0</bullet_speed>
+		<bullet_count>5</bullet_count>
+	</weapon>
+</weapons>

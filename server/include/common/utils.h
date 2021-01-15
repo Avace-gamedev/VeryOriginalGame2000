@@ -4,3 +4,4 @@
 
 ID freshID();
 
+char *readFileBytes(const char *name, int *len);

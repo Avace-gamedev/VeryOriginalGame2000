@@ -21,14 +21,14 @@ struct NetworkFrame
     // the messages created by the server to be sent to the clients do not
     // use this value
     ID sender;
-    int buffer_size;
+    framesize_t buffer_size;
     BUFFER buffer;
 
-    NetworkFrame(const int len = BUFFER_SIZE);
+    NetworkFrame(const framesize_t len = BUFFER_SIZE);
     NetworkFrame(const char *buffer);
     ~NetworkFrame();
 
-    void append(const void *bytes, const int len);
+    void append(const void *bytes, const framesize_t len);
     void appendInt8(const int8_t i);
     void appendInt16(const int16_t i);
     void appendInt32(const int32_t i);
@@ -37,16 +37,16 @@ struct NetworkFrame
 
     const bool dynamic() const;
     OPCODE &opcode() const;
-    size_t &size() const;
-    size_t totalSize() const; // including header
+    framesize_t &size() const;
+    framesize_t totalSize() const; // including header
     char *header();
     const char *header() const;
     char *content();
     const char *content() const;
 
     static OPCODE &NetworkFrame::getMessageOpCode(const char *message);
-    static size_t &getMessageSize(const char *message);
-    static size_t getMessageTotalSize(const char *message);
+    static framesize_t &getMessageSize(const char *message);
+    static framesize_t getMessageTotalSize(const char *message);
     static char *getMessageHeader(char *message);
     static char *getMessageContent(char *message);
 };

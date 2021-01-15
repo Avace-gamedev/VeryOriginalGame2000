@@ -129,7 +129,7 @@ int UDPServer::update(unsigned long long timeout)
         int i = 0;
         while (i < received)
         {
-            size_t expected_length = NetworkFrame::getMessageSize(&buffer[i]);
+            int expected_length = NetworkFrame::getMessageSize(&buffer[i]);
 
             if (expected_length < 0)
             {
@@ -269,7 +269,7 @@ bool UDPServer::doClientInit(NetworkFrame frame, sockaddr_in *from)
     if (!OPCODE_IS(frame.opcode(), OP_INIT))
         return false;
 
-    size_t expected_length = frame.size();
+    int expected_length = frame.size();
     const char *content = frame.content();
 
     // add \0 in case its not there

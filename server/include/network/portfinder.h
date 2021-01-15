@@ -45,4 +45,4 @@ void PortFinder<N>::setFree(const int port)
     present.set(port - offset, true);
 }
 
-char *readFileBytes(const char *name, size_t *len);
+char *readFileBytes(const char *name, int *len);

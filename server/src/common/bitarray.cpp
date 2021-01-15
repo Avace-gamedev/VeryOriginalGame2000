@@ -9,7 +9,7 @@
 
 BitArray::BitArray(const int length) : length(length)
 {
-    int actual_length = ceil((double)length / 8);
+    int actual_length = (int)ceil((float)length / 8);
     array = (uint8_t *)malloc(actual_length);
     for (int i = 0; i < actual_length; i++)
         array[i] = 0;
@@ -42,27 +42,12 @@ const int BitArray::size() const { return length; }
 
 void BitArray::fill(bool b)
 {
-    memset(array, b ? 255 : 0, ceil((double)length / 8));
+    memset(array, b ? 255 : 0, (size_t)ceil((float)length / 8));
 }
 
 const int BitArray::blitIn(char *buffer) const
 {
-    int actual_length = ceil((double)length / 8);
+    int actual_length = (int)ceil((float)length / 8);
     memcpy(buffer, array, actual_length);
     return actual_length;
-}
-
-char *readFileBytes(const char *name, size_t *len)
-{
-    std::ifstream file(name, std::ios::binary);
-    file.seekg(0, std::ios::end);
-    *len = file.tellg();
-
-    LOG_F(INFO, "reading file %s of size %d bytes", name, *len);
-
-    char *ret = (char *)malloc(*len);
-    file.seekg(0, std::ios::beg);
-    file.read(ret, *len);
-    file.close();
-    return ret;
 }
