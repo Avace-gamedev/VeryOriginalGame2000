@@ -1,10 +1,13 @@
 #pragma once
 
 #include <stdint.h>
+#include "tinyxml/tinyxml2.h"
 
 #include "common/vector.hpp"
 #include "common/bitarray.h"
 #include "network/network.h"
+#include "engine/enemy.h"
+#include "engine/world.h"
 
 typedef uint32_t TILE;
 
@@ -53,18 +56,36 @@ struct TilemapDesc
     const framesize_t size() const;
 };
 
-class TilemapLoader
+template <typename T>
+struct Group
 {
-    TilemapDesc map;
-    TilesetDesc set;
+    ID id;
+    std::vector<T> elts;
+};
 
+struct Enemy;
+struct SpawnPoint;
+
+class Map
+{
     int tileset_count;
 
-    bool loadMap(const char *path);
+    TilemapDesc tilemap;
+    TilesetDesc tileset;
+
+    void loadLayer(tinyxml2::XMLElement *layer);
+    void loadEnemies(tinyxml2::XMLElement *layer);
+    void loadSpawns(tinyxml2::XMLElement *layer);
     bool loadTileset(const char *path);
 
 public:
-    TilemapLoader(const char *path);
-    TilemapDesc getDesc() { return map; };
-    TilesetDesc getSet() { return set; };
+    std::vector<Group<Enemy>> enemy_groups;
+    std::vector<Group<SpawnPoint>> spawn_points;
+
+    Map(int scale);
+
+    const TilemapDesc *getTilemap() { return &tilemap; }
+    const TilesetDesc *getTileset() { return &tileset; }
+
+    bool load(const char *path);
 };

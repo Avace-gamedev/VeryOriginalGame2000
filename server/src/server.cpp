@@ -48,20 +48,16 @@ int main(int argc, char **argv)
     PortFinder<256> port_finder(62000);
 
     // make map
-    TilemapLoader map_loader("data/second_try.xml");
+    Map map(4);
+    map.load("data/second_try.xml");
 
-    TilemapDesc map = map_loader.getDesc();
-    map.scale = 4;
+    NetworkFrame tilemap_frame(map.getTilemap()->size());
+    tilemap_frame.opcode() = OP_BINARY;
+    map.getTilemap()->write(tilemap_frame);
 
-    NetworkFrame map_frame(map.size());
-    map_frame.opcode() = OP_BINARY;
-    map.write(map_frame);
-
-    TilesetDesc set = map_loader.getSet();
-
-    NetworkFrame set_frame(set.size());
-    set_frame.opcode() = OP_BINARY;
-    set.write(set_frame);
+    NetworkFrame tileset_frame(map.getTileset()->size());
+    tileset_frame.opcode() = OP_BINARY;
+    map.getTileset()->write(tileset_frame);
 
     // load weapons
 
@@ -74,8 +70,8 @@ int main(int argc, char **argv)
     // prepare files to be sent by TCP servers
 
     std::vector<NetworkFrame *> files;
-    files.push_back(&map_frame);
-    files.push_back(&set_frame);
+    files.push_back(&tilemap_frame);
+    files.push_back(&tileset_frame);
     files.push_back(&weapons_frame);
 
     // make world
@@ -97,7 +93,7 @@ int main(int argc, char **argv)
     world.add(&other_player_);
 
     // initial snapshot
-    Snapshot snapshot = world.makeSnapshot(Time::nowInTicks(CLIENT_PERIOD));
+    Snapshot snapshot = world.makeSnapshot(0);
     world.remember(snapshot);
 
     tick_t last_server_tick = Time::nowInTicks(SERVER_PERIOD);
@@ -267,7 +263,7 @@ int main(int argc, char **argv)
                     }
 
                     NetworkFrame frame(config.size());
-                    config.write(frame, player, &map);
+                    config.write(frame, player, map.getTilemap());
                     network.sendTo(id, frame);
 
                     LOG_F(INFO, "sent %d bytes to player %d, initial tick %d", frame.size(), id, config.initial_snapshot->tick);
@@ -280,7 +276,7 @@ int main(int argc, char **argv)
                 if (player->ready && network.isAlive(player->id))
                 {
                     NetworkFrame frame(snapshot.size());
-                    snapshot.write(frame, player, &map);
+                    snapshot.write(frame, player, map.getTilemap());
                     network.sendTo(player->id, frame);
                 }
             }

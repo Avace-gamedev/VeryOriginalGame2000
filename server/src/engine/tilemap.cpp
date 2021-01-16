@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <sstream>
 #include "loguru/loguru.hpp"
-#include "tinyxml/tinyxml2.h"
 
 #include "common/vector.hpp"
 #include "common/utils.h"
@@ -35,7 +34,7 @@ const framesize_t TilesetDesc::size() const
     size += sizeof(uint8_t);
     size += solid->size();
     size += sizeof(framesize_t);
-    size += (framesize_t)data_len; // we will probably never need more than an int32 to encore the size 
+    size += (framesize_t)data_len; // we will probably never need more than an int32 to encore the size
     return size;
 }
 
@@ -143,16 +142,19 @@ const framesize_t TilemapDesc::size() const
     return size;
 }
 
-TilemapLoader::TilemapLoader(const char *path)
+Map::Map(int scale)
 {
-    if (fs::exists(path))
-        loadMap(path);
-    else
-        LOG_F(ERROR, "could not load map: %s no such file or directory", path);
+    tilemap.scale = scale;
 }
 
-bool TilemapLoader::loadMap(const char *path)
+bool Map::load(const char *path)
 {
+    if (!fs::exists(path))
+    {
+        LOG_F(ERROR, "could not load map: %s no such file or directory", path);
+        return false;
+    }
+
     LOG_F(INFO, "loading %s", path);
 
     tinyxml2::XMLDocument doc;
@@ -165,19 +167,19 @@ bool TilemapLoader::loadMap(const char *path)
 
     tinyxml2::XMLElement *map_element = doc.FirstChildElement("map");
 
-    map.width = map_element->IntAttribute("width");
-    map.height = map_element->IntAttribute("height");
-    map.tile_size = map_element->IntAttribute("tilewidth");
-    if (map_element->IntAttribute("tileheight") != map.tile_size)
-        LOG_F(WARNING, "map has different tile width and tile height (%d and %d), ignoring tile height", map.tile_size, map_element->IntAttribute("tileheight"));
+    tilemap.width = map_element->IntAttribute("width");
+    tilemap.height = map_element->IntAttribute("height");
+    tilemap.tile_size = map_element->IntAttribute("tilewidth");
+    if (map_element->IntAttribute("tileheight") != tilemap.tile_size)
+        LOG_F(WARNING, "map has different tile width and tile height (%d and %d), ignoring tile height", tilemap.tile_size, map_element->IntAttribute("tileheight"));
 
-    LOG_F(INFO, "map grid dimension %d, %d, tile size %d", map.width, map.height, map.tile_size);
+    LOG_F(INFO, "map grid dimension %d, %d, tile size %d * %hu", tilemap.width, tilemap.height, tilemap.tile_size, tilemap.scale);
 
-    int flatsize = map.width * map.height;
-    map.tiles = (TILE *)malloc(flatsize * sizeof(TILE));
+    int flatsize = tilemap.width * tilemap.height;
+    tilemap.tiles = (TILE *)malloc(flatsize * sizeof(TILE));
     for (int i = 0; i < flatsize; i++)
-        map.tiles[i] = 0;
-    map.collisions = new BitArray(flatsize);
+        tilemap.tiles[i] = 0;
+    tilemap.collisions = new BitArray(flatsize);
 
     tinyxml2::XMLElement *tileset = map_element->FirstChildElement("tileset");
     const char *tileset_filename = tileset->Attribute("source");
@@ -187,38 +189,99 @@ bool TilemapLoader::loadMap(const char *path)
     if (!loadTileset(tileset_path.string().c_str()))
         return false;
 
-    for (tinyxml2::XMLElement *e = map_element->FirstChildElement("layer"); e != NULL; e = e->NextSiblingElement("layer"))
+    for (tinyxml2::XMLElement *e = map_element->FirstChildElement("layer"); e != nullptr; e = e->NextSiblingElement("layer"))
+        loadLayer(e);
+
+    for (tinyxml2::XMLElement *e = map_element->FirstChildElement("objectgroup"); e != nullptr; e = e->NextSiblingElement("objectgroup"))
     {
         const char *name = e->Attribute("name");
-        LOG_F(INFO, "loading layer %s", name);
-
-        int width = e->IntAttribute("width");
-        int height = e->IntAttribute("height");
-        const char *data = e->FirstChildElement("data")->GetText();
-
-        std::stringstream s_stream(data);
-        for (int i = 0; i < width * height; i++)
-        {
-            unsigned int tile_id;
-            s_stream >> tile_id;
-            if (tile_id > 0)
-            {
-                TILE id = (TILE)tile_id;
-                memcpy(&map.tiles[i], &id, sizeof(id));
-
-                int actual_id = (id << 3) >> 3;
-                map.collisions->set(i, set.solid->get(actual_id -1));
-            }
-
-            if (s_stream.peek() == ',')
-                s_stream.ignore();
-        }
+        if (strcmp(name, "enemies") == 0)
+            loadEnemies(e);
+        else if (strcmp(name, "spawns") == 0)
+            loadSpawns(e);
+        else
+            LOG_F(WARNING, "unknown object group named %s, ignored", name);
     }
 
     return true;
 }
 
-bool TilemapLoader::loadTileset(const char *path)
+void Map::loadEnemies(tinyxml2::XMLElement *layer)
+{
+    Group<Enemy> group;
+    group.id = layer->IntAttribute("id");
+
+    LOG_F(INFO, "loading enemy group %d", group.id);
+
+    for (tinyxml2::XMLElement *e = layer->FirstChildElement("object"); e != nullptr; e = e->NextSiblingElement("object"))
+    {
+        Enemy enemy;
+        enemy.name = e->Attribute("name");
+        enemy.pos.x = e->FloatAttribute("x") * tilemap.scale;
+        enemy.pos.y = e->FloatAttribute("y") * tilemap.scale;
+
+        tinyxml2::XMLElement *properties = e->FirstChildElement("properties");
+        for (tinyxml2::XMLElement *e = layer->FirstChildElement("object"); e != nullptr; e = e->NextSiblingElement("object"))
+        {
+            const char *name = e->Attribute("name");
+            const char *type = e->Attribute("type");
+            if (strcmp(name, "difficulty") == 0 && strcmp(type, "int") == 0)
+                enemy.difficulty = e->IntAttribute("value");
+        }
+
+        group.elts.push_back(enemy);
+    }
+    enemy_groups.push_back(group);
+}
+
+void Map::loadSpawns(tinyxml2::XMLElement *layer)
+{
+    Group<SpawnPoint> group;
+    group.id = layer->IntAttribute("id");
+
+    LOG_F(INFO, "loading spawn group %d", group.id);
+
+    for (tinyxml2::XMLElement *e = layer->FirstChildElement("object"); e != nullptr; e = e->NextSiblingElement("object"))
+    {
+        SpawnPoint spawn_point;
+        spawn_point.id = e->IntAttribute("id");
+        spawn_point.pos.x = e->FloatAttribute("x") * tilemap.scale;
+        spawn_point.pos.y = e->FloatAttribute("y") * tilemap.scale;
+
+        group.elts.push_back(spawn_point);
+    }
+    spawn_points.push_back(group);
+}
+
+void Map::loadLayer(tinyxml2::XMLElement *layer)
+{
+    const char *name = layer->Attribute("name");
+    LOG_F(INFO, "loading layer %s", name);
+
+    int width = layer->IntAttribute("width");
+    int height = layer->IntAttribute("height");
+    const char *data = layer->FirstChildElement("data")->GetText();
+
+    std::stringstream s_stream(data);
+    for (int i = 0; i < width * height; i++)
+    {
+        unsigned int tile_id;
+        s_stream >> tile_id;
+        if (tile_id > 0)
+        {
+            TILE id = (TILE)tile_id;
+            memcpy(&tilemap.tiles[i], &id, sizeof(id));
+
+            int actual_id = (id << 3) >> 3;
+            tilemap.collisions->set(i, tileset.solid->get(actual_id - 1));
+        }
+
+        if (s_stream.peek() == ',')
+            s_stream.ignore();
+    }
+}
+
+bool Map::loadTileset(const char *path)
 {
     LOG_F(INFO, "loading %s", path);
 
@@ -233,40 +296,40 @@ bool TilemapLoader::loadTileset(const char *path)
     tinyxml2::XMLElement *tileset_element = doc.FirstChildElement("tileset");
 
     // tile_size
-    set.tile_size = tileset_element->IntAttribute("tilewidth");
-    if (tileset_element->IntAttribute("tileheight") != set.tile_size)
-        LOG_F(WARNING, "tileset has different tile width and tile height (%d and %d), ignoring tile height", set.tile_size, tileset_element->IntAttribute("tileheight"));
+    tileset.tile_size = tileset_element->IntAttribute("tilewidth");
+    if (tileset_element->IntAttribute("tileheight") != tileset.tile_size)
+        LOG_F(WARNING, "tileset has different tile width and tile height (%d and %d), ignoring tile height", tileset.tile_size, tileset_element->IntAttribute("tileheight"));
 
     // width and height
     tinyxml2::XMLElement *image = tileset_element->FirstChildElement("image");
-    set.width = image->IntAttribute("width") / set.tile_size;
-    set.height = image->IntAttribute("height") / set.tile_size;
+    tileset.width = image->IntAttribute("width") / tileset.tile_size;
+    tileset.height = image->IntAttribute("height") / tileset.tile_size;
 
-    LOG_F(INFO, "tileset grid dimension %d, %d, tile size %d", set.width, set.height, set.tile_size);
+    LOG_F(INFO, "tileset grid dimension %d, %d, tile size %d", tileset.width, tileset.height, tileset.tile_size);
 
     // read image, it will be sent to clients
     const char *image_filename = image->Attribute("source");
     fs::path this_path(path);
     fs::path image_filepath(image_filename);
     fs::path image_path = this_path.parent_path() / image_filepath;
-    set.data = readFileBytes(image_path.string().c_str(), &set.data_len);
+    tileset.data = readFileBytes(image_path.string().c_str(), &tileset.data_len);
 
     // collision map
-    set.solid = new BitArray(set.width * set.height);
+    tileset.solid = new BitArray(tileset.width * tileset.height);
 
-    for (tinyxml2::XMLElement *e = tileset_element->FirstChildElement("tile"); e != NULL; e = e->NextSiblingElement("tile"))
+    for (tinyxml2::XMLElement *e = tileset_element->FirstChildElement("tile"); e != nullptr; e = e->NextSiblingElement("tile"))
     {
         int i = e->IntAttribute("id");
 
         tinyxml2::XMLElement *properties = e->FirstChildElement("properties");
-        for (tinyxml2::XMLElement *p = properties->FirstChildElement("property"); p != NULL; p = p->NextSiblingElement("property"))
+        for (tinyxml2::XMLElement *p = properties->FirstChildElement("property"); p != nullptr; p = p->NextSiblingElement("property"))
         {
             const char *name = p->Attribute("name");
             const char *type = p->Attribute("type");
             if (name && strcmp(name, "solid") == 0 && type && strcmp(type, "bool") == 0)
-                set.solid->set(i, p->BoolAttribute("value"));
+                tileset.solid->set(i, p->BoolAttribute("value"));
         }
     }
 
     return true;
-} 
+}

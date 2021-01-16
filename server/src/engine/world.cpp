@@ -4,7 +4,9 @@
 #include <math.h>
 #include "loguru/loguru.hpp"
 
-const int Snapshot::write(NetworkFrame &frame, const Player *player, const TilemapDesc *TilemapDesc) const
+#include "engine/tilemap.h"
+
+const int Snapshot::write(NetworkFrame &frame, const Player *player, const TilemapDesc *tilemap) const
 {
     int size = frame.size();
 
@@ -41,12 +43,12 @@ const int Snapshot::write(NetworkFrame &frame, const Player *player, const Tilem
     // EntityDesc::write will update size
     for (EntityDesc desc : entities)
     {
-        if (player_desc && TilemapDesc)
+        if (player_desc && tilemap)
         {
             // don't send entity if it is not visible by player
             float player_entity_dist = sqrt((player_desc->x - desc.x) * (player_desc->x - desc.x) + (player_desc->y - desc.y) * (player_desc->y - desc.y));
             float player_entity_angle = atan2(desc.y - player_desc->y, desc.x - player_desc->x);
-            float ray_dist = computeDistance(Vec2f(player_desc->x + player_desc->radius, player_desc->y + player_desc->radius), player_entity_angle, player_entity_dist, TilemapDesc);
+            float ray_dist = computeDistance(Vec2f(player_desc->x + player_desc->radius, player_desc->y + player_desc->radius), player_entity_angle, player_entity_dist, tilemap);
 
             if (ray_dist < player_entity_dist)
                 continue;
@@ -152,10 +154,7 @@ ControlFrame ControlFrame::read(NetworkFrame frame)
 //
 //
 
-World::World(TilemapDesc *map) : map(map)
-{
-    addSpawn(Vec2f(200, 200));
-}
+World::World(Map *map) : map(map) {}
 
 World::~World()
 {
@@ -165,15 +164,13 @@ World::~World()
         delete entity;
 }
 
-void World::addSpawn(const Vec2f pos)
-{
-    spawn_point.push_back(pos);
-}
-
 Player *World::createPlayer(ID id, sockaddr_in from, std::string name)
 {
     Player *player = new Player(id, from, name);
-    player->place(spawn_point[0]);
+    player->place(map->spawn_points[0].elts[0].pos);
+
+    LOG_F(INFO, "spawned player at %f, %f", player->pos.x, player->pos.y);
+
     player->pickWeapon(3);
     add(player);
     return player;
@@ -247,7 +244,8 @@ void World::update(tick_t current_tick)
     for (Player *player : players)
         if (player->want_shoot && player->canShoot(current_tick))
         {
-            for (int i = 0; i < player->equipped_weapon.bullet_count; i++) {
+            for (int i = 0; i < player->equipped_weapon.bullet_count; i++)
+            {
                 Bullet bullet;
                 player->configBullet(&bullet);
                 doHitScan(bullet, player->client_tick);
@@ -256,9 +254,9 @@ void World::update(tick_t current_tick)
         }
 
     for (Player *entity : players)
-        entity->update(current_tick, map);
+        entity->update(current_tick, map->getTilemap());
     for (Entity *entity : entities)
-        entity->update(current_tick, map);
+        entity->update(current_tick, map->getTilemap());
 }
 
 void World::doHitScan(Bullet bullet, tick_t tick)
@@ -271,11 +269,11 @@ void World::doHitScan(Bullet bullet, tick_t tick)
     }
 
     float closest_dist = -1;
-    const EntityDesc* closest_entity = nullptr;
+    const EntityDesc *closest_entity = nullptr;
 
     for (int i = 0; i < snapshot->entities.size(); i++)
     {
-        const EntityDesc* entity = &snapshot->entities[i];
+        const EntityDesc *entity = &snapshot->entities[i];
         if (entity->id == bullet.owner)
             continue;
 
@@ -291,14 +289,15 @@ void World::doHitScan(Bullet bullet, tick_t tick)
         }
     }
 
-    float wall_dist = computeDistance(bullet.pos, bullet.angle, (float)bullet.range, map);
+    float wall_dist = computeDistance(bullet.pos, bullet.angle, (float)bullet.range, map->getTilemap());
 
     if (closest_dist < 0 || wall_dist < closest_dist)
         return;
 
     bool is_player = false;
     Entity *target = getById(closest_entity->id, &is_player);
-    if (target) {
+    if (target)
+    {
         target->hurt(bullet.damage);
     }
 }
@@ -310,7 +309,7 @@ const Snapshot *World::getSnapshotAtTick(tick_t tick) const
         if (snapshot_history[i].tick <= tick)
             return &snapshot_history[i];
     }
-    return nullptr;
+    return &snapshot_history[snapshot_history.size() - 1];
 }
 
 Snapshot World::makeSnapshot(tick_t current_tick)

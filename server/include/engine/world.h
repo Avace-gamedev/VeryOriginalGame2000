@@ -7,7 +7,8 @@
 #include "common/deftypes.h"
 #include "engine/game_config.h"
 #include "engine/player.h"
-#include "engine/tilemap.h"
+
+class Map;
 
 // This is the information sent at every server tick to everyone
 struct Snapshot
@@ -47,13 +48,18 @@ struct ControlFrame
     static ControlFrame read(NetworkFrame frame);
 };
 
+struct SpawnPoint
+{
+    ID id;
+    Vec2f pos;
+};
+
 class World
 {
     ID snapshot_id = 0;
     std::deque<Snapshot> snapshot_history;
 
-    TilemapDesc *map;
-    std::vector<Vec2f> spawn_point;
+    Map *map;
 
     std::vector<Player *> players;
     std::vector<Entity *> entities;
@@ -63,10 +69,9 @@ class World
     const Snapshot *getSnapshotAtTick(tick_t tick) const;
 
 public:
-    World(TilemapDesc *map);
+    World(Map *map);
     ~World();
 
-    void addSpawn(const Vec2f pos);
     Player *createPlayer(ID id, sockaddr_in from, std::string name);
     void dropPlayer(const ID id);
 

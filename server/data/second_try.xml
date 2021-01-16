@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="50" height="50" tilewidth="8" tileheight="8" infinite="0" nextlayerid="3" nextobjectid="1">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="50" height="50" tilewidth="8" tileheight="8" infinite="0" nextlayerid="7" nextobjectid="10">
  <tileset firstgid="1" source="tileset.xml"/>
- <layer id="1" name="Calque de Tuiles 1" width="50" height="50">
+ <layer id="1" name="background" width="50" height="50">
   <data encoding="csv">
 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -55,7 +55,7 @@
 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 </data>
  </layer>
- <layer id="2" name="Calque de Tuiles 2" width="50" height="50">
+ <layer id="2" name="buildings" width="50" height="50">
   <data encoding="csv">
 2147483685,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,37,
 26,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,26,
@@ -109,4 +109,55 @@
 34,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,41,2147483682
 </data>
  </layer>
+ <objectgroup id="6" name="spawns">
+  <object id="7" x="345.333" y="33">
+   <point/>
+  </object>
+  <object id="8" x="333" y="37.6667">
+   <point/>
+  </object>
+  <object id="9" x="352.667" y="40.3333">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="3" name="enemies">
+  <object id="1" name="Martin" type="enemy" x="275.333" y="315.333">
+   <properties>
+    <property name="difficulty" type="int" value="0"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="2" name="Martin" type="enemy" x="274.667" y="330.333">
+   <properties>
+    <property name="difficulty" type="int" value="0"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="3" name="Martin" type="enemy" x="284.667" y="321.333">
+   <properties>
+    <property name="difficulty" type="int" value="0"/>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="5" name="enemies">
+  <object id="4" name="Martine" type="enemy" x="149" y="367.667">
+   <properties>
+    <property name="difficulty" type="int" value="0"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="5" name="Martine" type="enemy" x="148.333" y="382.667">
+   <properties>
+    <property name="difficulty" type="int" value="0"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="6" name="Martine" type="enemy" x="158.333" y="373.667">
+   <properties>
+    <property name="difficulty" type="int" value="0"/>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
 </map>

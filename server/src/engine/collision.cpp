@@ -3,6 +3,7 @@
 #include "loguru/loguru.hpp"
 
 #include "engine/game_config.h"
+#include "engine/tilemap.h"
 
 bool overlaps(float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2)
 {

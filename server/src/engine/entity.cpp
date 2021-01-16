@@ -6,6 +6,7 @@
 #include "common/utils.h"
 #include "network/network.h"
 #include "engine/game_config.h"
+#include "engine/tilemap.h"
 #include "engine/controller.h"
 
 #define M_PI 3.14159265359f

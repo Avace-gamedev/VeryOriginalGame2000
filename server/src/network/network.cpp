@@ -418,12 +418,6 @@ bool TCPServer::update(unsigned long long timeout)
 
     if (!client_connected)
     {
-        if (Time::now() > SERVER_TIMEOUT)
-        {
-            // close the server if no client has shown up
-            return true;
-        }
-
         int sock_len = sizeof(sockaddr_in);
 
         FD_SET read_set;
@@ -445,6 +439,16 @@ bool TCPServer::update(unsigned long long timeout)
             {
                 LOG_F(INFO, "Established connection with %s:%hu, sending %d bytes", inet_ntoa(client.sin_addr), ntohs(client.sin_port), totalSize());
                 client_connected = true;
+            }
+        }
+        else
+        {
+            unsigned long long t = Time::now() - start_time;
+            if (t > SERVER_TIMEOUT)
+            {
+                // close the server if no client has shown up
+                LOG_F(ERROR, "client has not showed up for %llu, closing", t);
+                return true;
             }
         }
     }
@@ -471,7 +475,10 @@ bool TCPServer::update(unsigned long long timeout)
                     return true;
                 }
                 else
+                {
                     LOG_F(ERROR, "TCP send: %d", WSAGetLastError());
+                    return true;
+                }
             }
             else
                 sent += written;
