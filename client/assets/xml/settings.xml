@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<data>
+    <include name="common"/>
+
+
+    <button x="0" y="0" label="back">
+        <param type="string" value="back" />
+        <text size="10pt" />
+    </button>
+</data>

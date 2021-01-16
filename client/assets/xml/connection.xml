@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<data>
+    <include name="common"/>
+
+    <button x="0" y="0" label="back" width="100pt" height="20pt">
+        <param type="string" value="back" />
+        <text size="10pt" />
+    </button>
+
+    <definition name="address_def" height="30pt" size="20pt" />
+
+    <chrome name="input_address_chrome" center_x="true" y="-2pt" width="520pt" height="40pt" src="dark_grey_inset" slice9="4,4,8,8" tile="true">
+        <anchor y="input_address_3.center" y-flush="center" />
+    </chrome>
+
+    <input_text name="input_address_3" filter="num" use_def="address_def" align="center" width="70pt" x="-25pt" center_x="true" center_y="true">
+        <param type="string" value="address3" />
+    </input_text>
+
+    <input_text name="input_address_2" filter="num" use_def="address_def" align="center" width="70pt" x="-20pt">
+        <anchor x="input_address_3.left" y="input_address_3.center" x-flush="right" y-flush="center" />
+        <param type="string" value="address2" />
+    </input_text>
+
+    <input_text name="input_address_1" filter="num" use_def="address_def" align="center" width="70pt" x="-20pt">
+        <anchor x="input_address_2.left" y="input_address_3.center" x-flush="right" y-flush="center" />
+        <param type="string" value="address1" />
+    </input_text>
+
+    <input_text name="input_address_4" filter="num" use_def="address_def" align="center" width="70pt" x="20pt">
+        <anchor x="input_address_3.right" y="input_address_3.center" x-flush="left" y-flush="center" />
+        <param type="string" value="address4" />
+    </input_text>
+
+    <input_text name="input_address_port" filter="num" use_def="address_def" align="center" width="120pt" x="20pt">
+        <anchor x="input_address_4.right" y="input_address_3.center" x-flush="left" y-flush="center" />
+        <param type="string" value="address_port" />
+    </input_text>
+
+    <text name="input_address_dot1" use_def="address_def" width="16pt" x="-10pt" text="." align="center">
+        <anchor x="input_address_2.left" y="input_address_3.center" x-flush="center" y-flush="center" />
+    </text>
+
+    <text name="input_address_dot2" use_def="address_def" width="16pt" x="-10pt" text="." align="center">
+        <anchor x="input_address_3.left" y="input_address_3.center" x-flush="center" y-flush="center" />
+    </text>
+
+    <text name="input_address_dot3" use_def="address_def" width="16pt" x="10pt" text="." align="center">
+        <anchor x="input_address_3.right" y="input_address_3.center" x-flush="center" y-flush="center" />
+    </text>
+
+    <text name="input_address_semicolon" use_def="address_def" width="16pt" x="10pt" text=":" align="center">
+        <anchor x="input_address_4.right" y="input_address_3.center" x-flush="center" y-flush="center" />
+    </text>
+
+    <text name="address_label" use_def="address_def" center_x="true" y="-10pt" width="screen.width" size="20pt" text="IP Address" align="center">
+        <anchor y="input_address_3.top" y-flush="bottom" />
+    </text>
+
+    <chrome name="name_field_chrome" center_x="true" y="-2pt" width="520pt" height="40pt" src="dark_grey_inset" slice9="4,4,8,8" tile="true">
+        <anchor y="name_field.center" y-flush="center" />
+    </chrome>
+
+    <input_text name="name_field" use_def="address_def" center_x="true" y="-20pt" width="500pt" size="20pt" align="center">
+        <anchor y="address_label.top" y-flush="bottom" />
+        <param type="string" value="name" />
+    </input_text>
+
+    <text name="name_field_label" use_def="address_def" center_x="true" y="-10pt" width="screen.width" size="20pt" text="Display name" align="center">
+        <anchor y="name_field.top" y-flush="bottom" />
+    </text>
+
+    <button name="connect_button" y="2pt" width="200pt" height="30pt" label="Connect">
+        <param type="string" value="connect" />
+        <anchor x="input_address_chrome.center" y="input_address_chrome.bottom" x-flush="center" y-flush="top" />
+        <text size="20pt" />
+    </button>
+</data>

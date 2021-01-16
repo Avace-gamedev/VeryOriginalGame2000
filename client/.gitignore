@@ -1,0 +1,4 @@
+export
+*.hidden
+source/VisibilityMap.hx
+source/TestState.hx

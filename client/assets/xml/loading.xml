@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<data>
+    <include name="common"/>
+
+    <sprite x="0" y="0" width="screen.width" height="screen.height" color="0xFF00AFB5">
+    </sprite>
+
+    <bar name="progress_bar" center_x="true" center_y="true" width="500pt" height="50pt" filled_color="0xFF004777" empty_color="0x00ffffff">
+    </bar>
+
+    <text name="label" center_x="true" y="-2pt" text="Loading..." width="screen.width" color="white" size="30pt" align="center">
+        <anchor y="progress_bar.top" y-flush="bottom" />
+    </text>
+
+    <text name="progress_text" text="0%" color="white" size="30pt" align="center" width="400pt">
+        <anchor x="progress_bar.center" y="progress_bar.center" x-flush="center" y-flush="center" />
+    </text>
+
+    <button name="cancel_button" center_x="true" y="20pt" width="110pt" height="30pt" label="Cancel">
+        <anchor y="progress_bar.bottom" y-flush="top" />
+        <param type="string" value="cancel" />
+        <text size="15pt"/>
+    </button>
+</data>

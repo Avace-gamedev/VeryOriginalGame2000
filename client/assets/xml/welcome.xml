@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<data>
+    <include name="common"/>
+
+    <text name="title" center_x="true" y="50pt" width="screen.width" align="center" size="80pt" text="2DShooter" font="8bitOperatorPlusSC-Regular">
+    </text>
+
+    <button name="launch_button" center_x="true" y="250pt" width="250pt" height="30pt" label="Go">
+        <param type="string" value="launch" />
+        <text size="20pt" />
+    </button>
+    <button name="settings_button" center_x="true" y="290pt" width="250pt" height="30pt" label="Settings">
+        <param type="string" value="settings" />
+        <text size="20pt" />
+    </button>
+</data>
