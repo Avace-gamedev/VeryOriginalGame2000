@@ -119,8 +119,8 @@ class WeaponBar extends FlxTypedGroup<FlxSprite>
 				Config.HUD_weap_width, Config.HUD_weap_height, FlxColor.TRANSPARENT, {
 				color: i < n_weapons ? FlxColor.fromRGBFloat(0, 0, 0, 0.5) : FlxColor.fromRGBFloat(0, 0, 0, 0.2)
 			});
-		weap_bar.x = (Config.screen_width - width) / 2;
-		weap_bar.y = Config.screen_height - height;
+		weap_bar.x = (FlxG.camera.width - width) / 2;
+		weap_bar.y = FlxG.camera.height - height;
 	}
 
 	override public function update(elapsed:Float)

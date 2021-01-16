@@ -60,9 +60,9 @@ class World extends FlxGroup
 		this.tilemap = tilemap;
 
 		// init cameras
-		world_camera = new FlxCamera(0, 0, Config.screen_width, Config.screen_height);
+		world_camera = new FlxCamera(0, 0, FlxG.camera.width, FlxG.camera.height);
 		world_camera.antialiasing = true;
-		ui_camera = new FlxCamera(0, 0, Config.screen_width, Config.screen_height);
+		ui_camera = new FlxCamera(0, 0, FlxG.camera.width, FlxG.camera.height);
 		ui_camera.antialiasing = true;
 
 		world_camera.bgColor = 0xFF00AFB5;
@@ -89,7 +89,7 @@ class World extends FlxGroup
 
 		minimap = new Minimap(level, 300, 300);
 		minimap.x = 5;
-		minimap.y = Config.screen_height - minimap.height - 5;
+		minimap.y = FlxG.camera.height - minimap.height - 5;
 		entities_hud.push(minimap);
 
 		// weapons
