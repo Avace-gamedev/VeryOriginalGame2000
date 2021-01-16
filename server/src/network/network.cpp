@@ -46,7 +46,9 @@ int UDPServer::_send(const char *buffer, int buffer_size, const sockaddr_in *to)
     if (bytes_sent == SOCKET_ERROR)
     {
         LOG_F(ERROR, "sent to %s:%hu: %d", inet_ntoa(to->sin_addr), ntohs(to->sin_port), WSAGetLastError());
+        return 0;
     }
+
     return bytes_sent;
 }
 
@@ -62,7 +64,7 @@ int UDPServer::sendTo(ID id, const NetworkFrame &frame)
     if (!getAddr(id, &addr))
         return 0;
 
-    return _send(frame.header(), frame.size() + HEADER_SIZE, &addr);
+    return _send(frame.header(), frame.totalSize(), &addr);
 }
 
 int UDPServer::_receive(char *buffer, int buffer_size, sockaddr_in *from)
@@ -389,6 +391,7 @@ TCPServer::TCPServer(int port, std::vector<NetworkFrame *> files) : files(files)
     }
 
     server_open = true;
+    start_time = Time::now();
 
     LOG_F(INFO, "TCP SOCKET listening on port %d", port);
 }
@@ -405,57 +408,82 @@ int TCPServer::totalSize() const
 
 bool TCPServer::update(unsigned long long timeout)
 {
-    if (!client_connected)
+    if (!isOpen())
     {
-        int sock_len = sizeof(sockaddr_in);
-        client_sock = accept(sock, (sockaddr *)&client, &sock_len);
-
-        if (client_sock == INVALID_SOCKET)
-        {
-            LOG_F(ERROR, "TCP accept: %d, %d", WSAGetLastError(), client_sock);
-            return false;
-        }
-        else
-        {
-            LOG_F(INFO, "Established connection with %s:%hu, sending %d bytes", inet_ntoa(client.sin_addr), ntohs(client.sin_port), totalSize());
-            client_connected = true;
-        }
+        LOG_F(ERROR, "TCP update: server closed");
+        return true;
     }
 
     struct timeval tv = Time::timevalOfLongLong(timeout);
 
-    FD_SET write_set;
-    FD_ZERO(&write_set);
-    FD_SET(client_sock, &write_set);
-
-    int ret = select(0, nullptr, &write_set, nullptr, &tv);
-
-    if (ret > 0)
+    if (!client_connected)
     {
-        int remaining = files[current_file]->totalSize() - sent;
-        int packet_size = min(TCP_PACKET_SIZE, remaining);
-        int written = send(client_sock, &files[current_file]->header()[sent], packet_size, 0);
-        if (written == SOCKET_ERROR)
+        if (Time::now() > SERVER_TIMEOUT)
         {
-            int error = WSAGetLastError();
-            if (error == WSAECONNRESET)
+            // close the server if no client has shown up
+            return true;
+        }
+
+        int sock_len = sizeof(sockaddr_in);
+
+        FD_SET read_set;
+        FD_ZERO(&read_set);
+        FD_SET(sock, &read_set);
+
+        int ret = select(0, &read_set, nullptr, nullptr, &tv);
+
+        if (ret > 0)
+        {
+            client_sock = accept(sock, (sockaddr *)&client, &sock_len);
+
+            if (client_sock == INVALID_SOCKET)
             {
-                LOG_F(ERROR, "TCP send: WSAECONNRESET, closing server");
-                return true;
+                LOG_F(ERROR, "TCP accept: %d, %d", WSAGetLastError(), client_sock);
+                return false;
             }
             else
-                LOG_F(ERROR, "TCP send: %d", WSAGetLastError());
+            {
+                LOG_F(INFO, "Established connection with %s:%hu, sending %d bytes", inet_ntoa(client.sin_addr), ntohs(client.sin_port), totalSize());
+                client_connected = true;
+            }
         }
-        else
-            sent += written;
+    }
+    else
+    {
 
-        if (sent >= files[current_file]->totalSize())
+        FD_SET write_set;
+        FD_ZERO(&write_set);
+        FD_SET(client_sock, &write_set);
+
+        int ret = select(0, nullptr, &write_set, nullptr, &tv);
+
+        if (ret > 0)
         {
-            current_file++;
-            sent = 0;
-        }
+            int remaining = files[current_file]->totalSize() - sent;
+            int packet_size = min(TCP_PACKET_SIZE, remaining);
+            int written = send(client_sock, &files[current_file]->header()[sent], packet_size, 0);
+            if (written == SOCKET_ERROR)
+            {
+                int error = WSAGetLastError();
+                if (error == WSAECONNRESET)
+                {
+                    LOG_F(ERROR, "TCP send: WSAECONNRESET, closing server");
+                    return true;
+                }
+                else
+                    LOG_F(ERROR, "TCP send: %d", WSAGetLastError());
+            }
+            else
+                sent += written;
 
-        return current_file >= files.size();
+            if (sent >= files[current_file]->totalSize())
+            {
+                current_file++;
+                sent = 0;
+            }
+
+            return current_file >= files.size();
+        }
     }
 
     return false;

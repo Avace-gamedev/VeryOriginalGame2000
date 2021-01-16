@@ -133,89 +133,89 @@ int main(int argc, char **argv)
         while (!network.empty())
         {
             NetworkFrame frame = network.pop();
-            
+
             // handle incoming frame
             switch (frame.opcode())
-    {
-    case OP_CONTROL_FRAME:
-    {
-        Player *player = world.getPlayerById(frame.sender);
-        if (!player)
-        {
-            LOG_F(ERROR, "cannot find player with id %d", frame.sender);
-            continue;
-        }
+            {
+            case OP_CONTROL_FRAME:
+            {
+                Player *player = world.getPlayerById(frame.sender);
+                if (!player)
+                {
+                    LOG_F(ERROR, "cannot find player with id %d", frame.sender);
+                    continue;
+                }
 
-        ControlFrame ctrl_frame = ControlFrame::read(frame);
-        player->rememberControl(ctrl_frame.control);
-        break;
-    }
-    case OP_STATIC_INFO:
-    {
-        LOG_F(INFO, "launching TCP server");
-        TCPServer *tcp_server;
-        int port;
-        do
-        {
-            port = port_finder.get();
-            LOG_F(INFO, "Trying port %d...", port);
-            tcp_server = new TCPServer(port, files);
-        } while (!tcp_server->isOpen());
+                ControlFrame ctrl_frame = ControlFrame::read(frame);
+                player->rememberControl(ctrl_frame.control);
+                break;
+            }
+            case OP_STATIC_INFO:
+            {
+                LOG_F(INFO, "launching TCP server");
+                TCPServer *tcp_server;
+                int port;
+                do
+                {
+                    port = port_finder.get();
+                    LOG_F(INFO, "Trying port %d...", port);
+                    tcp_server = new TCPServer(port, files);
+                } while (!tcp_server->isOpen());
 
-        file_loaders.push_back(tcp_server);
+                file_loaders.push_back(tcp_server);
 
-        // write some info to be sent through UDP along with TCP port
+                // write some info to be sent through UDP along with TCP port
 
-        NetworkFrame frame;
-        frame.appendInt32((int)files.size());
-        frame.appendInt32(port);
-        frame.opcode() = OP_STATIC_INFO;
-        network.sendTo(frame.sender, frame);
-        break;
-    }
-    case OP_CONFIG:
-    {
-        sockaddr_in player_addr;
-        if (!network.getAddr(frame.sender, &player_addr))
-        {
-            LOG_F(ERROR, "unknown player %d at %s:%hu asking for world (ignored)",
-                    frame.sender, inet_ntoa(player_addr.sin_addr), ntohs(player_addr.sin_port));
-            continue;
-        }
+                NetworkFrame new_frame;
+                new_frame.appendInt32((int)files.size());
+                new_frame.appendInt32(port);
+                new_frame.opcode() = OP_STATIC_INFO;
+                network.sendTo(frame.sender, new_frame);
+                break;
+            }
+            case OP_CONFIG:
+            {
+                sockaddr_in player_addr;
+                if (!network.getAddr(frame.sender, &player_addr))
+                {
+                    LOG_F(ERROR, "unknown player %d at %s:%hu asking for world (ignored)",
+                          frame.sender, inet_ntoa(player_addr.sin_addr), ntohs(player_addr.sin_port));
+                    continue;
+                }
 
-        // make sure the name is not too long and
-        // that the string is null terminated
-        char *player_name = frame.content();
-        if (frame.size() <= NAME_SIZE)
-            player_name[frame.size()] = '\0';
-        else
-        {
-            NetworkFrame frame;
-            frame.opcode() = OP_WRONG_CLIENT_CONFIG;
-            network.sendTo(frame.sender, frame);
-            continue;
-        }
+                // make sure the name is not too long and
+                // that the string is null terminated
+                char *player_name = frame.content();
+                if (frame.size() <= NAME_SIZE)
+                    player_name[frame.size()] = '\0';
+                else
+                {
+                    NetworkFrame frame;
+                    frame.opcode() = OP_WRONG_CONFIG;
+                    network.sendTo(frame.sender, frame);
+                    continue;
+                }
 
-        Player *player = world.createPlayer(frame.sender, player_addr, player_name);
-        LOG_F(INFO, "created new player %s with ID %d", player->name, player->id);
-        new_connections.push_back(player->id);
-        break;
-    }
-    case OP_CLIENT_READY:
-    {
-        Player *player = world.getPlayerById(frame.sender);
-        if (!player)
-        {
-            LOG_F(ERROR, "unknown player %d is ready (ignored)",
-                    frame.sender);
-            continue;
-        }
-        player->ready = true;
-        break;
-    }
-    default:
-        LOG_F(WARNING, "[tick:%d] Got unexpected frame while waiting for CONTROL_FRAME: opcode:%hu size:%hu (dropped)", Time::nowInTicks(CLIENT_PERIOD), frame.opcode(), frame.size());
-    }
+                Player *player = world.createPlayer(frame.sender, player_addr, player_name);
+                LOG_F(INFO, "created new player %s with ID %d", player->name, player->id);
+                new_connections.push_back(player->id);
+                break;
+            }
+            case OP_CLIENT_READY:
+            {
+                Player *player = world.getPlayerById(frame.sender);
+                if (!player)
+                {
+                    LOG_F(ERROR, "unknown player %d is ready (ignored)",
+                          frame.sender);
+                    continue;
+                }
+                player->ready = true;
+                break;
+            }
+            default:
+                LOG_F(WARNING, "[tick:%d] Got unexpected frame while waiting for CONTROL_FRAME: opcode:%hu size:%hu (dropped)", Time::nowInTicks(CLIENT_PERIOD), frame.opcode(), frame.size());
+            }
         }
 
         // do frequent stuff:
@@ -226,7 +226,7 @@ int main(int argc, char **argv)
             world.update(client_tick);
 
             for (int i = 0; i < file_loaders.size(); i++)
-                if (file_loaders[i]->update(10))
+                if (file_loaders[i]->update(1))
                 {
                     file_loaders[i]->close();
                     port_finder.setFree(file_loaders[i]->port());
@@ -243,7 +243,7 @@ int main(int argc, char **argv)
         if (server_tick > last_server_tick)
         {
             if (server_tick > last_server_tick + 1)
-                LOG_F(WARNING, "Missed network ticks (%d -> %d)", last_server_tick, server_tick);
+                LOG_F(WARNING, "Missed server ticks (%d -> %d)", last_server_tick, server_tick);
 
             // produce snapshot for current tick
             Snapshot snapshot = world.makeSnapshot(client_tick);

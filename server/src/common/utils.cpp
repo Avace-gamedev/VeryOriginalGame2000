@@ -6,11 +6,11 @@
 ID __id_cnt = 0;
 ID freshID() { return __id_cnt++; }
 
-char *readFileBytes(const char *name, int *len)
+char *readFileBytes(const char *name, size_t *len)
 {
     std::ifstream file(name, std::ios::binary);
     file.seekg(0, std::ios::end);
-    *len = (int)file.tellg();
+    *len = file.tellg();
 
     LOG_F(INFO, "reading file %s of size %d bytes", name, *len);
 

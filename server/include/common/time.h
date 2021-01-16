@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-typedef uint32_t tick_t;
+typedef int32_t tick_t;
 
 class Time
 {

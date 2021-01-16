@@ -83,12 +83,12 @@ const char *NetworkFrame::content() const
     return &header()[HEADER_SIZE];
 }
 
-void NetworkFrame::append(const void *bytes, const framesize_t len)
+void NetworkFrame::append(const void *bytes, const size_t len)
 {
     if (HEADER_SIZE + size() + len > buffer_size)
     {
         // allocate twice the needed space
-        int new_size = 2 * (HEADER_SIZE + size() + len);
+        size_t new_size = 2 * (HEADER_SIZE + size() + len);
         if (dynamic())
         {
             // reallocate dynamic array
@@ -101,13 +101,13 @@ void NetworkFrame::append(const void *bytes, const framesize_t len)
             memcpy(new_buffer, buffer.staticBuffer, BUFFER_SIZE);
             buffer.dynamicBuffer = new_buffer;
         }
-        buffer_size = new_size;
+        buffer_size = (framesize_t)new_size;
     }
 
     // now buffer is big enough
     char *c = content();
     memcpy(&c[size()], bytes, len);
-    size() += len;
+    size() += (framesize_t)len;
 }
 
 void NetworkFrame::appendInt8(const int8_t i)

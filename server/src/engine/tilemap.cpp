@@ -35,7 +35,7 @@ const framesize_t TilesetDesc::size() const
     size += sizeof(uint8_t);
     size += solid->size();
     size += sizeof(framesize_t);
-    size += data_len;
+    size += (framesize_t)data_len; // we will probably never need more than an int32 to encore the size 
     return size;
 }
 

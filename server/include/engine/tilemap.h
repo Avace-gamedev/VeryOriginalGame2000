@@ -14,7 +14,7 @@ struct TilesetDesc
     int height;
     uint8_t tile_size;
     BitArray *solid;
-    int data_len;
+    size_t data_len;
     char *data; // actual bitmap data
 
     const framesize_t write(NetworkFrame &frame) const;

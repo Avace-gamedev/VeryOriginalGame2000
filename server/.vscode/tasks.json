@@ -19,7 +19,11 @@
         "cwd": "${workspaceRoot}/build"
       },
       "dependsOn": ["cmake"],
-      "group": { "kind": "build", "isDefault": true }
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
     }
   ]
 }

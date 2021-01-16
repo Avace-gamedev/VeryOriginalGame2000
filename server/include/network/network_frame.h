@@ -7,7 +7,7 @@
 #define BUFFER_SIZE 128
 #endif
 
-#define HEADER_SIZE 3
+#define HEADER_SIZE (sizeof(OPCODE) + sizeof(framesize_t))
 
 union BUFFER
 {
@@ -28,7 +28,7 @@ struct NetworkFrame
     NetworkFrame(const char *buffer);
     ~NetworkFrame();
 
-    void append(const void *bytes, const framesize_t len);
+    void append(const void *bytes, const size_t len);
     void appendInt8(const int8_t i);
     void appendInt16(const int16_t i);
     void appendInt32(const int32_t i);

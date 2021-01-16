@@ -5,7 +5,6 @@
 #include "engine/game_config.h"
 #include "engine/ai.h"
 
-
 Controller::Controller() : control_history(ACK_SIZE * 8){};
 
 void Controller::registerControl(Control &ctrl)
@@ -18,6 +17,9 @@ void Controller::registerControl(Control &ctrl)
 
 Control *Controller::getNextControl(tick_t from)
 {
+    if (control_history.size() <= 0)
+        return nullptr;
+
     tick_t last_tick_received = control_history.get(0)->tick;
 
     if (from > last_tick_received)

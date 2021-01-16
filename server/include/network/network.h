@@ -107,6 +107,8 @@ class TCPServer
     int current_file;
     int sent = 0;
 
+    unsigned long long start_time = 0;
+
 public:
     TCPServer(int port, std::vector<NetworkFrame *> files);
 
